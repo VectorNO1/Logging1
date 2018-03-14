@@ -405,7 +405,6 @@ void Analyse_Common_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 					Gui_DrawFont_GBK16(54,60,RED,BLUE,"¾à");
 					Show_Num(90,60,RED,BLUE,_userprv->m_usSampleSpan);
 					_userprv->musMONIQICNT = _userprv->m_usSampleSpan*3600.0/_userprv->m_usMoNiQiSpeed;
-
 					_userprv->m_fMONIQIdeepth = _userprv->m_fdeepth *1.0;
 					Gui_DrawFont_GBK16(200,60,RED,BLUE,"Ã×");
 					//_userprv->m_fdeepth = _userprv->m_fMONIQIdeepth*1.0;
@@ -509,7 +508,7 @@ void Analyse_Common_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
   *              
   * @retval 
   */
-static void Analyse_3005_CMD(uint16_t NUM,uint16_t startdata,USERPRV * _userprv)
+static void Analyse_3005_CMD(uint16_t NUM,uint16_t startdata,uint16_t cmd,USERPRV * _userprv)
 {
 	uint16_t temp = 0;
 	uint16_t temp_val = 0;
@@ -523,7 +522,7 @@ static void Analyse_3005_CMD(uint16_t NUM,uint16_t startdata,USERPRV * _userprv)
  for(i = 0;i<NUM;i++)
 	{
 		_userprv->m_ucRExitflag = 0;
-		Send_Data_To_FPGA_DoubleCmd(0X3000,temp);
+		Send_Data_To_FPGA_DoubleCmd(cmd,temp);
 		while(!_userprv->m_ucRExitflag)
 		{
 			tempcout++;
@@ -573,7 +572,7 @@ static void Analyse_3005_CMD(uint16_t NUM,uint16_t startdata,USERPRV * _userprv)
   */
 void Analyse_control_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 {
-	static uint16_t data = 0,data1 = 0,temp = 0,i = 0,j = 0;
+	static uint16_t data = 0,data1 = 0,data2 = 0,temp = 0,i = 0,j = 0;
 	uint16_t tempcout  = 0,freecmdCount = 0;
 	static uint32_t Depth = 0;
 	unsigned char  buff[50];
@@ -617,9 +616,10 @@ void Analyse_control_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 			 }
 			break;
 		case 0x3004:  //ÒÇÆ÷¼ì²âÄ£Ê½1
-      data = (pdata[7]<<8)+(pdata[8]);  
+      data = (pdata[7]<<8)+(pdata[8]); 
+			data1 = (pdata[9]<<8)+(pdata[10]);
 		 _userprv->m_ucSlefTestON = 1;
-			Send_Data_To_FPGA_DoubleCmd(0X3000,data);
+			Send_Data_To_FPGA_DoubleCmd(data,data1);
 			_userprv->m_ucRExitflag = 0;
 			while(!_userprv->m_ucRExitflag)
 			{
@@ -644,8 +644,9 @@ void Analyse_control_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 			  _userprv->m_ucSlefTestON = 1;
 			  data = (pdata[7]<<8)+(pdata[8]);
 			  data1 = (pdata[9]<<8)+(pdata[10]);
+			  data2 = (pdata[11]<<8)+(pdata[12]);
 			  temp = data1;
-			  Analyse_3005_CMD(data,data1,_userprv);
+			  Analyse_3005_CMD(data,data1,data2,_userprv);
 //			 for(i = 0;i<data;i++)
 //				{
 //					_userprv->m_ucRExitflag = 0;
@@ -722,6 +723,19 @@ void Analyse_control_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 			case 0x3008:  //µ¥×ÖÃüÁî
 				data = (pdata[7]<<8)+(pdata[8]);  
 				Send_Data_To_FPGA_OneCmd(data);
+			break;
+			case 0x3009:
+				cmd = (pdata[8]<<8)+(pdata[9]);
+		    val = (pdata[10]<<8)+(pdata[11]);
+				switch(pdata[7])
+				{
+					case 1:
+						Send_Data_To_FPGA_OneCmd(cmd);
+						break;
+					case 2:
+						Send_Data_To_FPGA_DoubleCmd(cmd,val);
+						break;
+				}
 			break;
 	}
 }

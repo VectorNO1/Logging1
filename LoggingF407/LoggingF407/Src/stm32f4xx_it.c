@@ -355,7 +355,7 @@ void EXTI4_IRQHandler(void)
 	__HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_4);
 }
 /**
-* @brief PB5 中断 
+* @brief PB5 中断 测试1000 米线缆 
 */
 void EXTI9_5_IRQHandler(void)
 {
