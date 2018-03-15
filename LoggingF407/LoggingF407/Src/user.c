@@ -361,9 +361,9 @@ void Analyse_Common_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 		  break;
 		case 0x0011:
 	//液晶屏提示进入通用配置命令 模式
-		_userprv->m_ucMainPageFlag = 1;
-	  Lcd_Clear(YELLOW);
-	  Gui_DrawFont_GBK24(5,5,BLACK,YELLOW,"通用命令配置");
+		  _userprv->m_ucMainPageFlag = 1;
+	    Lcd_Clear(YELLOW);
+	    Gui_DrawFont_GBK24(5,5,BLACK,YELLOW,"通用命令配置");
 			break;
 		case 0x0012://配置参数已经收到 进行解析存储
       _userprv->m_ucMainPageFlag = 0;
@@ -582,22 +582,6 @@ void Analyse_control_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 		case 0x3002: // 0x3002 可以忽略  最开始一般上位机 用到这条命令 后来 就删了 。
 			data = (pdata[7]<<8) + pdata[8];
 		  data1 = (pdata[9]<<8)+pdata[10];
-			//if(((_userprv->m_ucTransDataON)&&(_userprv->m_ucWaitReturnEnd == 0) )||(_userprv->m_ucTransDataON == 0))
-		if((data == 0x3000)||(data == 0x2000))
-		{
-			Send_Data_To_FPGA_DoubleCmd(data,data1);
-			_userprv->m_ucRExitflag = 0;
-			while(!_userprv->m_ucRExitflag){}
-		  if(_userprv->m_ucRExitflag == 1)
-			{
-				Read_Data_From_FPGA(&temp,1);
-				if(_userprv->m_ucETHCommuFlag)
-					TCP_server_out((uint8_t *)&temp,2);
-				else if(_userprv->m_ucUSBCommuFlag)
-					USBD_CUSTOM_HID_SendReport(&hUsbDeviceFS,(uint8_t *)&temp,2);
-			}
-		}
-		else
 		  Send_Data_To_FPGA_DoubleCmd(data,data1);
 			//else {} //这里为什么不加上代码讷 应为 逻辑上这各else 语句是不会执行的。程序是按顺序执行的。 所以上面的 if 判断也不需要。	
 			break;
@@ -608,6 +592,7 @@ void Analyse_control_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 				 case 0x0001:
 					 _userprv->m_ucTransDataON = 1;		
            _userprv->m_tLoggingStaHand.timespan  = 0;
+				   _userprv->m_uiMoniqicnt = 0;
   				 _userprv->m_uiTime = 0;
 					 break;
 				 case 0x0002:
@@ -646,7 +631,7 @@ void Analyse_control_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 			  data1 = (pdata[9]<<8)+(pdata[10]);
 			  data2 = (pdata[11]<<8)+(pdata[12]);
 			  temp = data1;
-			  Analyse_3005_CMD(data,data1,data2,_userprv);
+			  Analyse_3005_CMD(data1,data2,data,_userprv);
 //			 for(i = 0;i<data;i++)
 //				{
 //					_userprv->m_ucRExitflag = 0;
@@ -729,10 +714,10 @@ void Analyse_control_cmd(uint8_t * pdata,uint16_t cmdtype,USERPRV * _userprv)
 		    val = (pdata[10]<<8)+(pdata[11]);
 				switch(pdata[7])
 				{
-					case 1:
+					case 1:// 钆示踪 同位素能谱模式
 						Send_Data_To_FPGA_OneCmd(cmd);
 						break;
-					case 2:
+					case 2://钆示     其他模式
 						Send_Data_To_FPGA_DoubleCmd(cmd,val);
 						break;
 				}
